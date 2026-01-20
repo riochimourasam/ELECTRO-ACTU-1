@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration | Électro-Actu</title>
+    <link rel="stylesheet" href="admin-styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="nav-header">
+        <div class="nav-container">
+            <div class="nav-content">
+                <div class="nav-logo">
+                    <i class="fas fa-user-shield text-yellow"></i>
+                    <span class="logo-text">ADMIN - ÉLECTRO-ACTU</span>
+                </div>
+                <div class="nav-actions">
+                    <a href="index.html" class="btn-secondary">
+                        <i class="fas fa-home mr-1"></i>Retour au site
+                    </a>
+                    <button id="logoutBtn" class="btn-danger hidden">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Déconnexion
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Section de connexion -->
+    <div id="loginSection" class="login-section">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <i class="fas fa-user-shield login-icon"></i>
+                    <h2 class="login-title">Administration</h2>
+                    <p class="login-subtitle">Connexion requise</p>
+                </div>
+                <form id="loginForm" class="login-form">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="loginEmail" required class="form-input" placeholder="admin@electro-actu.fr">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mot de passe</label>
+                        <input type="password" id="loginPassword" required class="form-input" placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn-primary btn-full">
+                        <i class="fas fa-sign-in-alt mr-1"></i>Se connecter
+                    </button>
+                </form>
+                <p class="login-demo-info">
+                    Démo : admin@electro-actu.fr / admin123
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Admin -->
+    <div id="adminDashboard" class="dashboard hidden">
+        <div class="dashboard-container">
+            
+            <!-- En-tête du dashboard -->
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-tachometer-alt mr-2"></i>Tableau de bord
+                </h1>
+                <div class="user-info">
+                    <i class="fas fa-user-circle user-icon"></i>
+                    <span id="userEmail">admin@electro-actu.fr</span>
+                </div>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Total Articles</p>
+                        <p class="stat-value" id="totalArticles">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Publié aujourd'hui</p>
+                        <p class="stat-value" id="todayArticles">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon yellow">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Vues totales</p>
+                        <p class="stat-value" id="totalViews">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Abonnés Newsletter</p>
+                        <p class="stat-value" id="newsletterSubs">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulaire de publication -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-plus-circle mr-2"></i><span id="formTitle">Nouvel Article</span>
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form id="articleForm" class="article-form">
+                        <input type="hidden" id="editArticleId">
+                        
+                        <div class="form-row">
+                            <div class="form-group form-group-full">
+                                <label class="form-label">Titre de l'article *</label>
+                                <input type="text" id="title" required class="form-input" placeholder="Ex: La révolution des batteries solides">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Catégorie *</label>
+                                <select id="category" class="form-input">
+                                    <option>INNOVATION</option>
+                                    <option>SÉCURITÉ</option>
+                                    <option>NOUVEAUTÉ</option>
+                                    <option>TUTO</option>
+                                    <option>DOMOTIQUE</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <input type="checkbox" id="featured" style="margin-right: 0.5rem;">
+                                    Article en vedette
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Upload d'image -->
+                        <div class="form-row">
+                            <div class="form-group form-group-full">
+                                <label class="form-label">Image de couverture</label>
+                                <div class="image-upload-container">
+                                    <input type="file" id="imageFile" accept="image/*" class="file-input" onchange="handleImageUpload(event)">
+                                    <label for="imageFile" class="file-label">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        Cliquez ou glissez une image
+                                    </label>
+                                    <div id="imagePreview" class="image-preview hidden"></div>
+                                    <input type="url" id="imageUrl" class="form-input" placeholder="Ou collez une URL d'image" style="margin-top: 0.5rem;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group form-group-full">
+                                <label class="form-label">Résumé (extrait) *</label>
+                                <textarea id="summary" required rows="2" class="form-input" placeholder="Un court résumé de l'article..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group form-group-full">
+                                <label class="form-label">Contenu complet *</label>
+                                <textarea id="content" required rows="10" class="form-input" placeholder="Le contenu détaillé de votre article..."></textarea>
+                                <p class="form-help">
+                                    <strong>Astuce:</strong> Pour ajouter une image, collez son URL sur une nouvelle ligne.<br>
+                                    Pour ajouter une vidéo YouTube, collez le lien YouTube sur une nouvelle ligne.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Tags -->
+                        <div class="form-row">
+                            <div class="form-group form-group-full">
+                                <label class="form-label">Tags (séparés par des virgules)</label>
+                                <input type="text" id="tags" class="form-input" placeholder="électrique, innovation, technologie">
+                            </div>
+                        </div>
+
+                        <!-- Boutons d'aide pour insérer médias -->
+                        <div class="media-buttons">
+                            <button type="button" class="btn-media" onclick="showImageUrlHelper()">
+                                <i class="fas fa-image mr-1"></i>Ajouter une image
+                            </button>
+                            <button type="button" class="btn-media" onclick="showVideoHelper()">
+                                <i class="fab fa-youtube mr-1"></i>Ajouter une vidéo YouTube
+                            </button>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-paper-plane mr-2"></i><span id="submitBtnText">Publier l'article</span>
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="cancelEdit()">
+                                <i class="fas fa-redo mr-2"></i>Annuler
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Liste des articles -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-list mr-2"></i>Gestion des Articles
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div id="adminArticlesList" class="articles-list">
+                        <div class="loading-container">
+                            <i class="fas fa-spinner fa-spin loading-icon"></i>
+                            <p class="loading-text">Chargement...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestion Newsletter -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-envelope mr-2"></i>Abonnés Newsletter
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <!-- Boutons d'export -->
+                    <div class="newsletter-actions">
+                        <button onclick="exportNewsletterCSV()" class="btn btn-primary">
+                            <i class="fas fa-download"></i> Exporter Newsletter (CSV)
+                        </button>
+                        <button onclick="exportNewsletterXLSX()" class="btn btn-success">
+                            <i class="fas fa-file-excel"></i> Exporter Newsletter (Excel)
+                        </button>
+                    </div>
+
+                    <!-- Liste des abonnés -->
+                    <div id="newsletterList" class="newsletter-list">
+                        <div class="loading-container">
+                            <i class="fas fa-spinner fa-spin loading-icon"></i>
+                            <p class="loading-text">Chargement...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestion des Catégories -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-tags mr-2"></i>Gestion des Catégories
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <!-- Formulaire d'ajout de catégorie -->
+                    <div class="category-form-section">
+                        <h3 class="form-subtitle">
+                            <i class="fas fa-plus-circle mr-2"></i>Ajouter une nouvelle catégorie
+                        </h3>
+                        <form id="categoryForm" class="category-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Nom de la catégorie *</label>
+                                    <input type="text" id="categoryName" required class="form-input" placeholder="Ex: ÉNERGIE VERTE">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Couleur</label>
+                                    <select id="categoryColor" class="form-input">
+                                        <option value="blue">Bleu</option>
+                                        <option value="red">Rouge</option>
+                                        <option value="green">Vert</option>
+                                        <option value="yellow">Jaune</option>
+                                        <option value="purple">Violet</option>
+                                        <option value="orange">Orange</option>
+                                        <option value="pink">Rose</option>
+                                        <option value="indigo">Indigo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group form-group-full">
+                                    <label class="form-label">Description (optionnel)</label>
+                                    <textarea id="categoryDescription" rows="2" class="form-input" placeholder="Description de la catégorie..."></textarea>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-plus mr-2"></i>Ajouter la catégorie
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Liste des catégories -->
+                    <div class="categories-list-section">
+                        <h3 class="form-subtitle">
+                            <i class="fas fa-list mr-2"></i>Catégories existantes (<span id="categoriesCount">0</span>)
+                        </h3>
+                        <div id="categoriesList" class="categories-admin-list">
+                            <div class="loading-container">
+                                <i class="fas fa-spinner fa-spin loading-icon"></i>
+                                <p class="loading-text">Chargement...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal de confirmation de suppression -->
+    <div id="deleteModal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Confirmer la suppression
+                    </h3>
+                </div>
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir supprimer cet article ?</p>
+                    <p class="text-danger">Cette action est irréversible.</p>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancelDelete" class="btn-secondary">Annuler</button>
+                    <button id="confirmDelete" class="btn-danger">
+                        <i class="fas fa-trash mr-2"></i>Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Helper Modal for Media -->
+    <div id="mediaHelper" class="modal hidden">
+        <div class="modal-overlay" onclick="closeMediaHelper()"></div>
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="mediaHelperTitle">Ajouter un média</h3>
+                </div>
+                <div class="modal-body">
+                    <p id="mediaHelperText"></p>
+                    <input type="text" id="mediaHelperInput" class="form-input" placeholder="">
+                </div>
+                <div class="modal-footer">
+                    <button onclick="closeMediaHelper()" class="btn-secondary">Annuler</button>
+                    <button onclick="insertMedia()" class="btn-primary">
+                        <i class="fas fa-check mr-2"></i>Insérer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de modification de catégorie -->
+    <div id="editCategoryModal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeEditCategoryModal()"></div>
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i class="fas fa-edit mr-2"></i>Modifier la catégorie
+                    </h3>
+                </div>
+                <div class="modal-body">
+                    <form id="editCategoryForm">
+                        <input type="hidden" id="editCategoryId">
+                        <div class="form-group">
+                            <label class="form-label">Nom de la catégorie *</label>
+                            <input type="text" id="editCategoryName" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Couleur</label>
+                            <select id="editCategoryColor" class="form-input">
+                                <option value="blue">Bleu</option>
+                                <option value="red">Rouge</option>
+                                <option value="green">Vert</option>
+                                <option value="yellow">Jaune</option>
+                                <option value="purple">Violet</option>
+                                <option value="orange">Orange</option>
+                                <option value="pink">Rose</option>
+                                <option value="indigo">Indigo</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea id="editCategoryDescription" rows="2" class="form-input"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="closeEditCategoryModal()" class="btn-secondary">Annuler</button>
+                    <button onclick="updateCategory()" class="btn-primary">
+                        <i class="fas fa-save mr-2"></i>Enregistrer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmation de suppression de catégorie -->
+    <div id="deleteCategoryModal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Confirmer la suppression
+                    </h3>
+                </div>
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir supprimer cette catégorie ?</p>
+                    <p class="text-danger">
+                        <strong>Attention :</strong> Les articles utilisant cette catégorie devront être réassignés.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancelDeleteCategory" class="btn-secondary">Annuler</button>
+                    <button id="confirmDeleteCategory" class="btn-danger">
+                        <i class="fas fa-trash mr-2"></i>Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+</body>
+</html>

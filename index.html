@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Électro-Actu | Toute l'actualité électrique</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+</head>
+<body class="text-gray-800">
+
+    <!-- Theme Toggle Button -->
+    <button id="themeToggle" class="theme-toggle" title="Basculer le thème">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <!-- Navigation -->
+    <nav class="nav-header">
+        <div class="nav-container">
+            <div class="nav-content">
+                <div class="nav-logo" onclick="window.location.reload()">
+                    <i class="fas fa-bolt text-yellow"></i>
+                    <span class="logo-text">ÉLECTRO-ACTU</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#" class="nav-link active" data-filter="all">Accueil</a>
+                    <a href="#" class="nav-link" data-filter="NOUVEAUTÉ">Nouveautés</a>
+                    <a href="#" class="nav-link" data-filter="INNOVATION">Innovations</a>
+                    <a href="#" class="nav-link" data-filter="SÉCURITÉ">Sécurité</a>
+                </div>
+                <div class="nav-actions">
+                    <button id="newsletterBtn" class="btn-newsletter">
+                        <i class="fas fa-envelope mr-1"></i>Newsletter
+                    </button>
+                    
+                    <!-- Bouton Connexion (si non connecté) -->
+                    <a href="auth.html" class="btn-login" id="loginBtn">
+                        <i class="fas fa-user mr-1"></i>Connexion
+                    </a>
+                    
+                    <!-- Menu Utilisateur (si connecté) -->
+                    <div class="user-menu hidden" id="userMenu">
+                        <button class="btn-user" id="userMenuBtn">
+                            <img id="userAvatar" src="" alt="" class="user-avatar-img">
+                            <span id="userName"></span>
+                            <i class="fas fa-chevron-down ml-1"></i>
+                        </button>
+                        <div class="user-dropdown hidden" id="userDropdown">
+                            <div class="dropdown-header">
+                                <img id="userAvatarDropdown" src="" alt="" class="dropdown-avatar">
+                                <div>
+                                    <p class="dropdown-name" id="userNameDropdown"></p>
+                                    <p class="dropdown-email" id="userEmailDropdown"></p>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-user"></i> Mon profil
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-bookmark"></i> Mes favoris
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-comment"></i> Mes commentaires
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="admin.html" class="dropdown-item">
+                                <i class="fas fa-user-shield"></i> Administration
+                            </a>
+                            <button class="dropdown-item logout-item" id="logoutBtn">
+                                <i class="fas fa-sign-out-alt"></i> Déconnexion
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Le Courant de l'Information</h1>
+            <p class="hero-subtitle">Découvrez les dernières avancées technologiques, les normes de sécurité et le futur de l'énergie électrique.</p>
+            
+            <!-- Search Bar -->
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Rechercher un article...">
+                <i class="fas fa-search search-icon"></i>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div class="content-wrapper">
+            
+            <!-- Main Content Area -->
+            <div class="main-content">
+                <!-- Filters & Sort -->
+                <div class="filters-bar">
+                    <div class="filter-section">
+                        <h3 class="filter-title">Filtrer par:</h3>
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" data-category="all">Tous</button>
+                            <button class="filter-btn" data-category="INNOVATION">Innovation</button>
+                            <button class="filter-btn" data-category="SÉCURITÉ">Sécurité</button>
+                            <button class="filter-btn" data-category="NOUVEAUTÉ">Nouveauté</button>
+                            <button class="filter-btn" data-category="TUTO">Tuto</button>
+                            <button class="filter-btn" data-category="DOMOTIQUE">Domotique</button>
+                        </div>
+                    </div>
+                    <div class="sort-section">
+                        <label for="sortSelect" class="sort-label">Trier par:</label>
+                        <select id="sortSelect" class="sort-select">
+                            <option value="date-desc">Plus récent</option>
+                            <option value="date-asc">Plus ancien</option>
+                            <option value="popular">Plus populaire</option>
+                            <option value="title">Titre (A-Z)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h2 class="section-title">Derniers Articles</h2>
+                
+                <!-- Featured Articles -->
+                <div id="featuredContainer" class="featured-container"></div>
+                
+                <div id="articlesContainer" class="articles-grid">
+                    <div class="loading-container">
+                        <i class="fas fa-spinner fa-spin loading-icon"></i>
+                        <p class="loading-text">Chargement des articles...</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div id="pagination" class="pagination hidden"></div>
+            </div>
+
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <!-- Popular Articles -->
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">Articles Populaires</h3>
+                    <div id="popularArticles" class="popular-list">
+                        <div class="loading-mini">Chargement...</div>
+                    </div>
+                </div>
+
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">À Propos</h3>
+                    <p class="sidebar-text">
+                        "Monsieur Djone, bienvenue sur votre portail d'expertise. Ici, nous parlons volt, ampère et watt sans concession."
+                    </p>
+                </div>
+
+                <div class="categories-card">
+                    <h3 class="categories-title">Catégories</h3>
+                    <ul class="categories-list" id="categoriesList">
+                        <li><a href="#" class="category-link" data-category="DOMOTIQUE">Domotique</a></li>
+                        <li><a href="#" class="category-link" data-category="INNOVATION">Innovation</a></li>
+                        <li><a href="#" class="category-link" data-category="SÉCURITÉ">Sécurité</a></li>
+                        <li><a href="#" class="category-link" data-category="NOUVEAUTÉ">Nouveauté</a></li>
+                    </ul>
+                </div>
+
+                <!-- Newsletter Widget -->
+                <div class="newsletter-widget">
+                    <i class="fas fa-envelope-open-text newsletter-icon"></i>
+                    <h3 class="newsletter-title">Restez Informé</h3>
+                    <p class="newsletter-text">Recevez les dernières actualités directement dans votre boîte mail.</p>
+                    <button class="btn-newsletter-widget" onclick="openNewsletterModal()">
+                        S'abonner
+                    </button>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Newsletter Modal -->
+    <div id="newsletterModal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeNewsletterModal()"></div>
+        <div class="modal-dialog">
+            <div class="modal-content-card">
+                <button class="modal-close-small" onclick="closeNewsletterModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="newsletter-modal-content">
+                    <i class="fas fa-envelope newsletter-modal-icon"></i>
+                    <h3 class="newsletter-modal-title">Abonnez-vous à notre Newsletter</h3>
+                    <p class="newsletter-modal-text">Recevez les dernières actualités électriques directement dans votre boîte mail.</p>
+                    <form id="newsletterForm" class="newsletter-form">
+                        <input type="email" id="newsletterEmail" required placeholder="votre@email.fr" class="newsletter-input">
+                        <button type="submit" class="btn-newsletter-submit">
+                            <i class="fas fa-check mr-1"></i>S'abonner
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">&copy; 2026 Électro-Actu par Monsieur Djone. Tous droits réservés.</p>
+            <div class="social-links">
+                <a href="#" class="social-link"><i class="fab fa-facebook"></i></a>
+                <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
+                <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
